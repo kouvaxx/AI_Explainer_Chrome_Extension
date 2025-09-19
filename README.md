@@ -24,6 +24,7 @@ Ideal para estudantes, profissionais e curiosos que querem aprender sem sair da 
 Selecione qualquer palavra ou frase e obtenha a explicação instantânea:  
 
 <img width="1089" height="834" alt="image" src="https://github.com/user-attachments/assets/9ca426b3-185a-4f14-b14e-451bc1e45275" />
+Link da reportagem usada como exemplo: https://www.publico.pt/2025/09/19/sociedade/noticia/governo-vai-forcar-medicos-barreiro-trabalhar-urgencia-obstetrica-almada-2147772
   
 
 ---
