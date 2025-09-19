@@ -1,70 +1,84 @@
 // content_script.js
 
-// Adiciona um listener para mensagens enviadas pelo service worker (background.js).
-chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
-  if (message.type === "EXPLICACAO_GERADA" || message.type === "ERRO") {
-    const textoParaExibir = message.type === "ERRO" ? message.message : message.explanation;
-    exibirJanelaFlutuante(textoParaExibir);
+// Listener para mensagens vindas do background script
+chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
+  if (request.type === "EXPLICAR_TEXTO") {
+    handleExplanationRequest(request.text);
+    return true; // Indica que a resposta será enviada de forma assíncrona
   }
 });
 
-/**
- * Cria e exibe a janela flutuante com o texto da explicação.
- * @param {string} texto - O conteúdo a ser exibido na janela.
- */
-function exibirJanelaFlutuante(texto) {
-  // Remove qualquer janela anterior para evitar sobreposição.
-  const janelaExistente = document.getElementById("ia-explicador-janela");
-  if (janelaExistente) {
-    janelaExistente.remove();
-  }
-
-  // Cria os elementos da janela flutuante.
-  const janela = document.createElement("div");
-  janela.id = "ia-explicador-janela";
-
-  const botaoFechar = document.createElement("button");
-  botaoFechar.id = "ia-explicador-fechar";
-  botaoFechar.innerHTML = "&times;"; // Símbolo 'X'
-  botaoFechar.onclick = () => janela.remove();
-
-  const conteudo = document.createElement("p");
-  conteudo.textContent = texto;
-
-  // Monta a estrutura da janela.
-  janela.appendChild(botaoFechar);
-  janela.appendChild(conteudo);
-
-  // Adiciona a janela ao corpo da página.
-  document.body.appendChild(janela);
-
-  // --- Lógica de Posicionamento ---
+// Função para lidar com a requisição de explicação
+async function handleExplanationRequest(selectedText) {
+  // Pega a posição do texto selecionado para posicionar a janela
   const selection = window.getSelection();
-  if (selection.rangeCount > 0) {
-    const range = selection.getRangeAt(0);
-    const rect = range.getBoundingClientRect(); // Coordenadas do texto selecionado
+  if (!selection.rangeCount) return;
+  const range = selection.getRangeAt(0);
+  const rect = range.getBoundingClientRect();
 
-    // Posiciona a janela abaixo do texto selecionado.
-    // window.scrollY é usado para ajustar a posição em páginas com rolagem.
-    janela.style.top = `${rect.bottom + window.scrollY + 8}px`;
-    janela.style.left = `${rect.left + window.scrollX}px`;
+  try {
+    // Verifica se a API de IA está disponível
+    if (window.ai && (await window.ai.canCreateTextSession()) === "readily") {
+      const session = await window.ai.createTextSession();
+      const prompt = `Explique o seguinte termo de forma simples e direta, em português do Brasil e em no máximo duas frases: "${selectedText}"`;
+      
+      // Mostra um indicador de "carregando"
+      const loadingPopup = displayFloatingWindow("Gerando explicação...", rect);
 
-    // Ajusta a posição se a janela sair da tela.
-    const janelaRect = janela.getBoundingClientRect();
-    if (janelaRect.right > window.innerWidth) {
-        janela.style.left = `${window.innerWidth - janelaRect.width - 10}px`;
+      const explanation = await session.prompt(prompt);
+      
+      // Remove o popup de carregando e mostra a explicação
+      loadingPopup.remove();
+      displayFloatingWindow(explanation, rect);
+
+      session.destroy();
+    } else {
+      displayFloatingWindow("A API de IA não está disponível ou habilitada neste navegador.", rect);
     }
+  } catch (error) {
+    console.error("Erro ao processar a explicação com IA:", error);
+    displayFloatingWindow("Ocorreu um erro ao gerar a explicação.", rect);
   }
+}
+
+// Função para criar e exibir a janela flutuante
+function displayFloatingWindow(content, rect) {
+  // Remove qualquer janela anterior
+  const existingExplainer = document.getElementById('ia-explicador-container');
+  if (existingExplainer) {
+    existingExplainer.remove();
+  }
+
+  const container = document.createElement('div');
+  container.id = 'ia-explicador-container';
   
-  // --- Lógica para fechar ao clicar fora ---
+  const contentDiv = document.createElement('div');
+  contentDiv.id = 'ia-explicador-content';
+  contentDiv.innerHTML = content;
+
+  const closeButton = document.createElement('button');
+  closeButton.id = 'ia-explicador-close';
+  closeButton.innerText = 'X';
+  closeButton.onclick = () => container.remove();
+
+  container.appendChild(closeButton);
+  container.appendChild(contentDiv);
+  document.body.appendChild(container);
+
+  // Posiciona a janela abaixo do texto selecionado
+  container.style.position = 'absolute';
+  container.style.top = `${window.scrollY + rect.bottom + 5}px`;
+  container.style.left = `${window.scrollX + rect.left}px`;
+
+  // Adiciona um listener para fechar ao clicar fora
   setTimeout(() => {
-    const clickForaHandler = (event) => {
-      // Se o clique não foi dentro da janela, remove-a.
-      if (!janela.contains(event.target)) {
-        janela.remove();
-        document.removeEventListener('click', clickForaHandler);
+    document.addEventListener('click', function onClickOutside(event) {
+      if (!container.contains(event.target)) {
+        container.remove();
+        document.removeEventListener('click', onClickOutside);
       }
-    };
-    document.addEventListener('click', clickForaHandler);
-  }, 100); // Pequeno delay para não capturar o clique que abriu o menu.
+    });
+  }, 0);
+
+  return container; // Retorna o container para poder removê-lo (ex: no loading)
 }
