@@ -1,49 +1,56 @@
 /* style.css */
 
-#ia-explicador-janela {
-  position: absolute;
-  z-index: 99999;
-  background-color: #ffffff;
-  border: 1px solid #e0e0e0;
-  border-radius: 12px;
-  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.15);
-  padding: 16px;
-  max-width: 320px;
+/* O contêiner principal da janela flutuante */
+#ia-explicador-container {
+  position: absolute; /* Essencial para posicionar perto do texto */
+  z-index: 2147483647; /* Um z-index muito alto para ficar sobre quase tudo */
+  border: 1px solid #dcdcdc; /* Borda sutil */
+  border-radius: 8px; /* Cantos arredondados */
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15); /* Sombra para destacar */
+  padding: 12px;
+  max-width: 350px; /* Largura máxima para não ocupar a tela toda */
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-  font-size: 14px;
-  line-height: 1.5;
-  color: #333;
-  animation: fadeIn 0.2s ease-in-out;
+  line-height: 1.6;
+  animation: fadeIn 0.15s ease-out;
+  overflow: hidden; /* Garante que o botão de fechar não saia dos cantos arredondados */
 }
 
-#ia-explicador-janela p {
-  margin: 0;
-  padding: 0;
+/* O conteúdo de texto dentro da janela */
+#ia-explicador-content {
+  padding-right: 20px; /* Adiciona espaço para não ficar embaixo do botão de fechar */
 }
 
-#ia-explicador-fechar {
+/* O botão de fechar */
+#ia-explicador-close {
   position: absolute;
-  top: 8px;
-  right: 8px;
+  top: 5px;
+  right: 5px;
   background: transparent;
   border: none;
-  font-size: 20px;
+  font-size: 18px;
+  font-weight: bold;
   line-height: 1;
-  color: #888;
+  color: #70757a; /* Cinza sutil */
   cursor: pointer;
-  padding: 2px 5px;
+  padding: 5px;
   border-radius: 50%;
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
-#ia-explicador-fechar:hover {
-  color: #000;
-  background-color: #f0f0f0;
+#ia-explicador-close:hover {
+  color: #202124; /* Cor mais escura ao passar o mouse */
+  background-color: #f1f3f4; /* Fundo leve ao passar o mouse (padrão Google) */
 }
 
+/* Animação de entrada */
 @keyframes fadeIn {
   from {
     opacity: 0;
-    transform: translateY(-10px);
+    transform: translateY(-8px);
   }
   to {
     opacity: 1;
